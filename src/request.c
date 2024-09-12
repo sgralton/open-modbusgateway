@@ -108,8 +108,14 @@ handle_request(void *arg) {
         goto pthread_exit;
     }
 
-    // IPv4 & IPv6 support
-    ctx = modbus_new_tcp_pi(req->ip, req->port);
+    if (req->format == MODBUS_TCP){
+        fprintf(logfile, "TCP\n");
+        // IPv4 & IPv6 support
+        ctx = modbus_new_tcp_pi(req->ip, req->port);
+    } else if (req->format == MODBUS_RTU){
+        fprintf(logfile, "RTU\n");
+        ctx = modbus_new_rtu(req->serial_device_i, 9600, 'E', 8, 1);
+    }
 
     // Set the timeout
     modbus_set_response_timeout(ctx, req->timeout, 0);
