@@ -49,9 +49,21 @@ mqtt_message_callback(struct mosquitto *mosq,
     char raw_registers[1024];
     memset(raw_registers, 0, sizeof(raw_registers));
 
-    // Parse the message in a "secure" way
-    int num_args =
-        sscanf(buffer,
+    int format;
+
+    // Just get the format from the buffer first
+    int num_args = sscanf(buffer, "%hhu", &format);
+
+    if (num_args != 1) {
+        // Handle format parsing error
+        fprintf(stderr, "Error reading format from buffer\n");
+        return -1; // Indicate an error
+    }
+
+    switch (format) {
+        case MODBUS_TCP:
+            num_args = 
+            sscanf(buffer,
                "%hhu %llu %hhu %63s %7s %hu %hhu %hhu %u %hu %1023s",
                &req->format,        // %d
                &req->cookie,        // %llu
@@ -65,6 +77,27 @@ mqtt_message_callback(struct mosquitto *mosq,
                &req->register_count, // %d (is the value if function is 6)
                raw_registers         // %1023s
         );
+        break;
+
+        case MODBUS RTU:
+            num_args = 
+            sscanf(buffer,
+               "%hhu %llu %hhu %31s %7s %hu %hhu %hhu %u %hu %1023s",
+               &req->format,            // %d
+               &req->cookie,            // %llu
+               &req->serial_device_id,  // %32s
+               &req->timeout,           // %d
+               &req->slave_id,          // %d
+               &req->function,          // %d
+               &req->register_addr,     // %d (is register number in request format)
+               &req->register_count,    // %d (is the value if function is 6)
+               raw_registers            // %1023s
+        );
+        &req->ip_type = 3;  //will be blocked by a TCP request
+        break;
+    }
+
+
 
 #ifdef DEBUG
     flog(logfile, "num parameters %i\n", num_args);
@@ -86,11 +119,16 @@ mqtt_message_callback(struct mosquitto *mosq,
     );
 #endif
 
-    // Check the request against the allowed filters
-    if (filter_match(config->head, req) != 0) {
-        error = MQTT_MESSAGE_BLOCKED;
-        flog(logfile, "request blocked {%s}\n", buffer);
-        goto cleanup;
+    // Todo: RTU filtering.
+    if (req->format == MODBUS_TCP){
+
+        // Check the request against the allowed filters
+        if (filter_match(config->head, req) != 0 ) {
+            error = MQTT_MESSAGE_BLOCKED;
+            flog(logfile, "request blocked {%s}\n", buffer);
+            goto cleanup;
+        }
+
     }
 
     free(buffer);
@@ -123,12 +161,12 @@ mqtt_message_callback(struct mosquitto *mosq,
     req->register_addr -= 1;
 
     // Validate inputs
-    if (req->format != 0) {
+    if (req->format != MODBUS_TCP || req->format != MODBUS_RTU) {
         error = MQTT_INVALID_REQUEST;
         flog(logfile, "invalid format in request\n");
         goto cleanup;
     }
-    if (req->ip_type > 2) {
+    if (req->ip_type > 2 && req->format == MODBUS_TCP) {
         error = MQTT_INVALID_REQUEST;
         flog(logfile, "invalid IP type in request\n");
         goto cleanup;

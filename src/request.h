@@ -13,6 +13,7 @@ typedef struct {
     uint8_t format;
     unsigned long long int cookie;
     uint8_t ip_type;
+    char serial_device_id[32];
     char ip[64];
     char port[8];
     uint16_t timeout;

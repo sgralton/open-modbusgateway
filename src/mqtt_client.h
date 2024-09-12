@@ -7,6 +7,8 @@
 #define MQTT_INVALID_REQUEST 1
 #define MQTT_ERROR_MESSAGE 2
 #define MQTT_MESSAGE_BLOCKED 3
+#define MODBUS_TCP 0
+#define MODBUS_RTU 1
 
 void mqtt_reply_error(struct mosquitto *mosq,
                       const char *topic,
