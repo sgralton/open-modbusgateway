@@ -114,7 +114,50 @@ handle_request(void *arg) {
         ctx = modbus_new_tcp_pi(req->ip, req->port);
     } else if (req->format == MODBUS_RTU){
         fprintf(logfile, "RTU\n");
-        ctx = modbus_new_rtu(req->serial_device_id, 19200, 'E', 8, 1);
+        char *device;        // For device (e.g., /dev/ttyS0)
+        int baud;            // For baud rate (e.g., 19200)
+        char parity;         // For parity (e.g., 'E')
+        int data_bits;       // For data bits (e.g., 8)
+        int stop_bits;       // For stop bits (e.g., 1)
+
+        // Duplicate the string because strtok modifies the input
+        char *input = strdup(serial_device_id);
+
+        // Tokenize the CSV string
+        char *token = strtok(input, ",");
+        if (token != NULL) {
+            device = token; // First token is the device (e.g., /dev/ttyS0)
+        }
+
+        token = strtok(NULL, ",");
+        if (token != NULL) {
+            baud = atoi(token); // Second token is the baud rate (converted to int)
+        }
+
+        token = strtok(NULL, ",");
+        if (token != NULL) {
+            parity = token[0]; // Third token is the parity (first character of string)
+        }
+
+        token = strtok(NULL, ",");
+        if (token != NULL) {
+            data_bits = atoi(token); // Fourth token is the data bits (converted to int)
+        }
+
+        token = strtok(NULL, ",");
+        if (token != NULL) {
+            stop_bits = atoi(token); // Fifth token is the stop bits (converted to int)
+        }
+
+        // After parsing, call modbus_new_rtu with the parsed values
+        modbus_t *ctx = modbus_new_rtu(device, baud, parity, data_bits, stop_bits);
+        if (ctx == NULL) {
+            fprintf(stderr, "Unable to create the Modbus context\n");
+            free(input); // Free the duplicated string
+            return;
+        }
+
+        //ctx = modbus_new_rtu(req->serial_device_id, 19200, 'E', 8, 1);
     }
 
     // Set the timeout
