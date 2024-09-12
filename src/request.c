@@ -114,7 +114,7 @@ handle_request(void *arg) {
         ctx = modbus_new_tcp_pi(req->ip, req->port);
     } else if (req->format == MODBUS_RTU){
         fprintf(logfile, "RTU\n");
-        ctx = modbus_new_rtu(req->serial_device_i, 9600, 'E', 8, 1);
+        ctx = modbus_new_rtu(req->serial_device_id, 19200, 'E', 8, 1);
     }
 
     // Set the timeout

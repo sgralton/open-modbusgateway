@@ -76,7 +76,7 @@ mqtt_message_callback(struct mosquitto *mosq,
         case MODBUS_RTU:
             num_args = 
             sscanf(buffer,
-               "%hhu %llu %hhu %31s %7s %hu %hhu %hhu %u %hu %1023s",
+               "%hhu %llu %31s %hu %hhu %hhu %u %hu %1023s",
                &req->format,            // %d
                &req->cookie,            // %llu
                &req->serial_device_id,  // %32s
@@ -140,6 +140,8 @@ mqtt_message_callback(struct mosquitto *mosq,
     case ERANGE:
         flog(logfile, "interger size exceeds capacity\n");
         goto cleanup;
+    case 8:   // Number of expected items
+    case 9:   // Number of expected items
     case 10:   // Number of expected items
     case 11:   // or this
         break; // break out of the switch
@@ -155,7 +157,7 @@ mqtt_message_callback(struct mosquitto *mosq,
     req->register_addr -= 1;
 
     // Validate inputs
-    if (req->format != MODBUS_TCP || req->format != MODBUS_RTU) {
+    if (req->format != MODBUS_TCP && req->format != MODBUS_RTU) {
         error = MQTT_INVALID_REQUEST;
         flog(logfile, "invalid format in request\n");
         goto cleanup;
@@ -195,10 +197,21 @@ mqtt_message_callback(struct mosquitto *mosq,
             error = MQTT_INVALID_REQUEST;
             goto cleanup;
         }
-    } else if ((req->function == 1 || req->function == 2 ||
+    } else if (req->function == 1 || req->function == 2 ||
                 req->function == 3 || req->function == 4 ||
-                req->function == 5 || req->function == 6) &&
-               num_args == 10) {
+                req->function == 5 || req->function == 6)
+    {
+
+	if (num_args == 10 && req->format == MODBUS_TCP){
+		//OK
+	} else if (num_args == 8 && req->format == MODBUS_RTU){
+		//OK
+	} else {
+		error = MQTT_INVALID_REQUEST;
+		flog(logfile, "invalid number of values supplied arguments\n");
+		goto cleanup;
+	}
+
         // OK
     } else {
         error = MQTT_INVALID_REQUEST;
