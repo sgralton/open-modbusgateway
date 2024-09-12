@@ -120,41 +120,48 @@ handle_request(void *arg) {
         int data_bits;       // For data bits (e.g., 8)
         int stop_bits;       // For stop bits (e.g., 1)
 
+	printf("Initial CSV string: %s\n", req->serial_device_id);
+
         // Duplicate the string because strtok modifies the input
-        char *input = strdup(serial_device_id);
+        char *input = strdup(req->serial_device_id);
 
         // Tokenize the CSV string
         char *token = strtok(input, ",");
         if (token != NULL) {
             device = token; // First token is the device (e.g., /dev/ttyS0)
+	    printf("Device: %s\n", device);
         }
 
         token = strtok(NULL, ",");
         if (token != NULL) {
             baud = atoi(token); // Second token is the baud rate (converted to int)
+	    printf("Baud Rate: %d\n", baud);
         }
 
         token = strtok(NULL, ",");
         if (token != NULL) {
             parity = token[0]; // Third token is the parity (first character of string)
+	    printf("Parity: %c\n", parity);
         }
 
         token = strtok(NULL, ",");
         if (token != NULL) {
             data_bits = atoi(token); // Fourth token is the data bits (converted to int)
+	    printf("Data Bits: %d\n", data_bits);
         }
 
         token = strtok(NULL, ",");
         if (token != NULL) {
             stop_bits = atoi(token); // Fifth token is the stop bits (converted to int)
-        }
+            printf("Stop Bits: %d\n", stop_bits); 
+	}
 
         // After parsing, call modbus_new_rtu with the parsed values
-        modbus_t *ctx = modbus_new_rtu(device, baud, parity, data_bits, stop_bits);
+        ctx = modbus_new_rtu(device, baud, parity, data_bits, stop_bits);
         if (ctx == NULL) {
             fprintf(stderr, "Unable to create the Modbus context\n");
+            goto modbus_cleanup;
             free(input); // Free the duplicated string
-            return;
         }
 
         //ctx = modbus_new_rtu(req->serial_device_id, 19200, 'E', 8, 1);
