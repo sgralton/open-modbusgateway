@@ -54,12 +54,6 @@ mqtt_message_callback(struct mosquitto *mosq,
     // Just get the format from the buffer first
     int num_args = sscanf(buffer, "%hhu", &format);
 
-    if (num_args != 1) {
-        // Handle format parsing error
-        fprintf(stderr, "Error reading format from buffer\n");
-        return -1; // Indicate an error
-    }
-
     switch (format) {
         case MODBUS_TCP:
             num_args = 
@@ -79,7 +73,7 @@ mqtt_message_callback(struct mosquitto *mosq,
         );
         break;
 
-        case MODBUS RTU:
+        case MODBUS_RTU:
             num_args = 
             sscanf(buffer,
                "%hhu %llu %hhu %31s %7s %hu %hhu %hhu %u %hu %1023s",
@@ -93,7 +87,7 @@ mqtt_message_callback(struct mosquitto *mosq,
                &req->register_count,    // %d (is the value if function is 6)
                raw_registers            // %1023s
         );
-        &req->ip_type = 3;  //will be blocked by a TCP request
+        req->ip_type = 3;  //will be blocked by a TCP request
         break;
     }
 
