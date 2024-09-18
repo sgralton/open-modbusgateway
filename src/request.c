@@ -160,8 +160,8 @@ handle_request(void *arg) {
         ctx = modbus_new_rtu(device, baud, parity, data_bits, stop_bits);
         if (ctx == NULL) {
             fprintf(stderr, "Unable to create the Modbus context\n");
-            goto modbus_cleanup;
-            free(input); // Free the duplicated string
+            //goto modbus_cleanup;
+            //free(input); // Free the duplicated string
         }
 
         //ctx = modbus_new_rtu(req->serial_device_id, 19200, 'E', 8, 1);
