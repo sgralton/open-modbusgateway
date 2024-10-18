@@ -182,8 +182,19 @@ mqtt_message_callback(struct mosquitto *mosq,
     }
 
     // Parsing of register values
-    if ((req->function == 15 || req->function == 16) && num_args == 11) {
-        int read_count = 0;
+    if (req->function == 15 || req->function == 16) {
+	if (num_args != 11 && req->format == MODBUS_TCP){
+            flog(logfile, "multiple tcp register write requires 11 arguments\n");
+            error = MQTT_INVALID_REQUEST;
+            goto cleanup;
+
+	} else if (num_args != 9 && req->format == MODBUS_RTU){
+            flog(logfile, "multiple rtu register write requires 9 arguments\n");
+	    error = MQTT_INVALID_REQUEST;
+	    goto cleanup;
+	}
+	
+	int read_count = 0;
         char *token = strtok(raw_registers, ",");
 
         while (token != NULL) {
