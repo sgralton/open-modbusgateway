@@ -259,9 +259,13 @@ main(int argc, char *argv[]) {
 
     // Initialize the mosquitto library
     mosquitto_lib_init();
-
+	
+   printf("Clientid: %s\n", clientid);
+   printf("Username: %s\n", config.username);
+   printf("Config.Clientid: %s\n", config.client_id);
+    
     // Create a new mosquitto client instance
-    mosq = mosquitto_new(clientid, true, &config);
+    mosq = mosquitto_new(config.client_id, true, &config);
     if (mosq) {
         mosquitto_threaded_set(mosq, 1); // Enable threading
 
